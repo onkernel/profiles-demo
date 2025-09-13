@@ -9,11 +9,11 @@ This is a Kernel TypeScript application that demonstrates profile-based browser 
 ## Commands
 
 ```bash
-# Install dependencies (using Bun)
-bun install
+# Install dependencies
+npm install
 
 # Run the application
-bun run index.ts
+npx tsx index.ts
 
 # Invoke Kernel actions via CLI
 kernel invoke profile-auth-and-task-execution create-profile-browser
