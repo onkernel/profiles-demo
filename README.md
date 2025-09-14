@@ -27,7 +27,7 @@ The application combines [Kernel SDK](https://docs.onkernel.com) for browser orc
 Create browser profiles that save authentication state (cookies, local storage, etc.) for reuse across sessions
 
 ### 🤖 AI-Powered Automation
-Execute natural language tasks on authenticated websites using Claude's capabilities
+Execute natural language tasks on authenticated websites using Claude's capabilities with optional data extraction
 
 ### 🛡️ Stealth Mode
 Built-in residential proxy and auto-CAPTCHA solving for reliable automation
@@ -58,7 +58,7 @@ ANTHROPIC_API_KEY=your_api_key_here
 
 ## Usage
 
-The application provides three main actions:
+The application provides four main actions:
 
 ### 1. Create Profile Browser
 
@@ -103,7 +103,8 @@ kernel invoke profile-auth-and-task-execution execute-task-with-profile \
   --payload '{
     "profile_name": "profile_1234567890_abc123",
     "task": "Go to ign.com and get the latest news stories",
-    "url": "https://ign.com"
+    "url": "https://ign.com",
+    "extract_instructions": "Extract the main headlines, article summaries, and any author information"
   }'
 ```
 
@@ -111,10 +112,12 @@ kernel invoke profile-auth-and-task-execution execute-task-with-profile \
 - `profile_name`: The profile to use (from step 1)
 - `task`: Natural language description of the task to execute
 - `url` (optional): Starting URL for the browser
+- `extract_instructions` (optional): Natural language instructions for extracting structured data after task completion
 
 **Returns:**
 - `success`: Boolean indicating task completion
 - `task_result`: Result from the executed task
+- `extracted_data` (optional): Structured data extracted after task completion based on your instructions
 - `session_id`: Browser session ID
 - `error`: Error message if task failed
 
@@ -122,7 +125,42 @@ kernel invoke profile-auth-and-task-execution execute-task-with-profile \
 - Creates a new browser with the existing profile (`save_changes: false`)
 - Loads all saved authentication from the profile
 - Uses Magnitude with Claude to execute the natural language task
+- Optionally extracts structured data after task completion using AI
 - Properly cleans up the browser session after completion
+
+### 4. Get Payload Schemas
+
+Returns the expected payload format for each action to help LLMs understand the API:
+
+```bash
+kernel invoke profile-auth-and-task-execution get-payload-schemas
+```
+
+**Returns:**
+- An object mapping action names to their payload schemas
+- Each schema includes field types, requirements, and descriptions
+- Useful for dynamic API discovery and integration
+
+**Example Response:**
+```json
+{
+  "create-profile-browser": {
+    "description": "Creates a new browser with a persistent profile for authentication",
+    "payload": null
+  },
+  "end-session-and-save-profile": {
+    "description": "Ends a browser session and saves the profile state",
+    "payload": {
+      "session_id": {
+        "type": "string",
+        "required": true,
+        "description": "The browser session ID to terminate"
+      }
+    }
+  }
+  // ... other actions
+}
+```
 
 ## Example Workflow
 
@@ -143,9 +181,12 @@ kernel invoke profile-auth-and-task-execution execute-task-with-profile \
    kernel invoke profile-auth-and-task-execution execute-task-with-profile \
      --payload '{
        "profile_name": "profile_1234567890_abc123",
-       "task": "Check my notifications and summarize them"
+       "task": "Check my notifications and summarize them",
+       "extract_instructions": "Extract notification titles, types, timestamps, and any action items"
      }'
    ```
+
+   The `extracted_data` in the response will contain structured information extracted after the task completes, making it easy to process the results programmatically.
 
 ## Architecture
 

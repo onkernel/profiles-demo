@@ -1,5 +1,6 @@
 import { Kernel, type KernelContext, ConflictError } from "@onkernel/sdk";
 import { startBrowserAgent } from "magnitude-core";
+import { z } from "zod";
 
 const kernel = new Kernel();
 
@@ -120,11 +121,13 @@ interface ExecuteTaskWithProfilePayload {
   profile_name: string;
   task: string;
   url?: string;
+  extract_instructions?: string; // Optional: Instructions for extracting data after task completion
 }
 
 interface ExecuteTaskWithProfileOutput {
   success: boolean;
   task_result?: any;
+  extracted_data?: Record<string, any>; // Optional: Structured data extracted after task completion
   error?: string;
   session_id?: string;
 }
@@ -139,7 +142,7 @@ app.action(
       };
     }
     
-    const { profile_name, task, url } = payload;
+    const { profile_name, task, url, extract_instructions } = payload;
     
     // Check for API key
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -167,7 +170,7 @@ app.action(
       
       // Configure LLM
       const llmConfig = {
-        provider: 'anthropic',
+        provider: 'anthropic' as const,
         options: {
           model: 'claude-sonnet-4-20250514',
           apiKey: process.env.ANTHROPIC_API_KEY
@@ -195,13 +198,34 @@ app.action(
       });
       
       console.log("Browser agent started, executing task:", task);
-      
+
       // Execute the task
       const result = await agent.act(task);
-      
+
+      // Extract data after task is completed if instructions are provided
+      let extractedData = null;
+      if (extract_instructions) {
+        try {
+          console.log("Extracting data with instructions:", extract_instructions);
+
+          // Define a flexible schema that can accommodate various data types
+          const flexibleSchema = z.object({
+            data: z.record(z.any()) // Allows any key-value pairs
+          });
+
+          // Extract data using the provided instructions
+          extractedData = await agent.extract(extract_instructions, flexibleSchema);
+          console.log("Data extracted successfully");
+        } catch (extractError) {
+          console.error("Error extracting data:", extractError);
+          // Continue without extraction data rather than failing the entire operation
+        }
+      }
+
       return {
         success: true,
         task_result: result,
+        extracted_data: extractedData,
         session_id: kernelBrowser.session_id
       };
       
@@ -228,5 +252,78 @@ app.action(
         }
       }
     }
+  }
+);
+
+/**
+ * Helper action that returns the expected payload format for each action
+ * This helps LLMs understand what parameters are required for each action
+ * Invoke this via CLI:
+ *  kernel invoke profile-auth-and-task-execution get-payload-schemas
+ */
+
+interface PayloadField {
+  type: string;
+  required: boolean;
+  description: string;
+}
+
+interface ActionSchema {
+  description: string;
+  payload: Record<string, PayloadField> | null;
+}
+
+interface GetPayloadSchemasOutput {
+  [actionName: string]: ActionSchema;
+}
+
+app.action(
+  "get-payload-schemas",
+  async (ctx: KernelContext): Promise<GetPayloadSchemasOutput> => {
+    return {
+      "create-profile-browser": {
+        description: "Creates a new browser with a persistent profile for authentication",
+        payload: null // No payload required
+      },
+      "end-session-and-save-profile": {
+        description: "Ends a browser session and saves the profile state",
+        payload: {
+          "session_id": {
+            type: "string",
+            required: true,
+            description: "The browser session ID to terminate"
+          }
+        }
+      },
+      "execute-task-with-profile": {
+        description: "Executes automated tasks using an existing profile with pre-loaded authentication",
+        payload: {
+          "profile_name": {
+            type: "string",
+            required: true,
+            description: "The profile name to use (from create-profile-browser)"
+          },
+          "task": {
+            type: "string",
+            required: true,
+            description: "Natural language description of the task to execute"
+          },
+          "url": {
+            type: "string",
+            required: false,
+            description: "Optional starting URL for the browser"
+          },
+          "extract_instructions": {
+            type: "string",
+            required: false,
+            description: "Optional instructions for extracting structured data after task completion"
+          }
+        }
+      },
+      "get-payload-schemas": {
+        description: "Returns the expected payload format for each action",
+        payload: null // No payload required
+      }
+    };
   }
 );
