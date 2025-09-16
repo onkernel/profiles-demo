@@ -1,8 +1,16 @@
 {
-  "name": "ts-basic",
+  "name": "kernel-profiles-demo",
   "module": "index.ts",
   "type": "module",
-  "private": true,
+  "private": false,
+  "description": "Kernel profile-based browser automation demo with persistent authentication",
+  "author": "Kernel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/onkernel/profiles-demo"
+  },
+  "keywords": ["kernel", "browser-automation", "profiles", "authentication", "mcp", "ai-automation"],
   "peerDependencies": {
     "typescript": "^5"
   },
