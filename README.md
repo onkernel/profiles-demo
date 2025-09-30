@@ -5,6 +5,8 @@
 
 This TypeScript application demonstrates how to use Kernel's profile-based browser automation system for persistent authentication and task execution across browser sessions.
 
+[![Kernel Profiles Youtube Video Screenshot](https://github.com/user-attachments/assets/2238004a-7684-42b2-814c-c68a56d94706)](https://www.youtube.com/watch?v=KG450vlHcUc)
+
 ## Overview
 
 This demo showcases Kernel's browser profile capabilities, allowing you to:
@@ -12,7 +14,7 @@ This demo showcases Kernel's browser profile capabilities, allowing you to:
 - Execute automated tasks using pre-authenticated profiles
 - Manage browser sessions programmatically with proper cleanup
 
-The application combines [Kernel SDK](https://docs.onkernel.com) for browser orchestration with [Magnitude](https://docs.magnitude.run/getting-started/introduction) for LLM-powered browser automation.
+The application combines [Kernel SDK](https://github.com/onkernel/kernel-node-sdk) for browser orchestration with [Magnitude](https://docs.magnitude.run/getting-started/introduction) for LLM-powered browser automation.
 
 ## Features
 
